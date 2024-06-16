@@ -51,6 +51,13 @@ async function run() {
       res.send(result);
     })
 
+    app.delete('/reviews/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await reviewCollection.deleteOne(query);
+      res.send(result);
+    })
+
     app.post('/reviews', async (req, res) => {
       const newProduct = req.body;
       console.log(newProduct);
@@ -59,7 +66,7 @@ async function run() {
     })
 
 
-    // Get all jobs data from db for pagination
+    // Get all meals data from db for pagination
     app.get('/all-meals', async (req, res) => {
       const size = parseInt(req.query.size)
       const page = parseInt(req.query.page) - 1
@@ -79,7 +86,14 @@ async function run() {
       res.send(result)
     })
 
-    // Get all jobs data count from db
+    app.delete('/meals/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await mealsCollection.deleteOne(query);
+      res.send(result);
+    })
+
+    // Get all meals data count from db
     app.get('/meals-count', async (req, res) => {
       const filter = req.query.filter
       const search = req.query.search
