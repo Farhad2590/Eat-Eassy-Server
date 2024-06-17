@@ -40,10 +40,31 @@ async function run() {
     const mealsCollection = client.db("eatEassyDb").collection("meals");
     const reviewCollection = client.db("eatEassyDb").collection("reviews");
     const userCollection = client.db("eatEassyDb").collection("users");
+    const upcommingCollection = client.db("eatEassyDb").collection("upcomming");
+
+
+    app.post('/upcomming', async (req, res) => {
+      const newProduct = req.body;
+      console.log(newProduct);
+      const result = await upcommingCollection.insertOne(newProduct)
+      res.send(result)
+    })
+
+    app.get('/upcomming', async (req, res) => {
+      const result = await upcommingCollection.find().toArray();
+      res.send(result);
+    })
 
     app.get('/meals', async (req, res) => {
       const result = await mealsCollection.find().toArray();
       res.send(result);
+    })
+
+    app.post('/meals', async (req, res) => {
+      const newProduct = req.body;
+      console.log(newProduct);
+      const result = await mealsCollection.insertOne(newProduct)
+      res.send(result)
     })
 
     app.get('/reviews', async (req, res) => {
@@ -60,7 +81,7 @@ async function run() {
 
     app.post('/reviews', async (req, res) => {
       const newProduct = req.body;
-      console.log(newProduct);
+      // console.log(newProduct);
       const result = await reviewCollection.insertOne(newProduct)
       res.send(result)
     })
@@ -125,6 +146,13 @@ async function run() {
         admin = user?.role === 'admin';
       }
       res.send({ admin });
+    })
+
+    // get a user info by email from db
+    app.get('/users/:email', async (req, res) => {
+      const email = req.params.email
+      const result = await userCollection.findOne({ email })
+      res.send(result)
     })
 
     app.post('/users', async (req, res) => {
