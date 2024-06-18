@@ -41,8 +41,19 @@ async function run() {
     const reviewCollection = client.db("eatEassyDb").collection("reviews");
     const userCollection = client.db("eatEassyDb").collection("users");
     const upcommingCollection = client.db("eatEassyDb").collection("upcomming");
+    const requestCollection = client.db("eatEassyDb").collection("meal_request");
 
 
+    //Meal requests
+    app.post('/mealRequest', async (req, res) => {
+      const newProduct = req.body;
+      console.log(newProduct);
+      const result = await requestCollection.insertOne(newProduct)
+      res.send(result)
+    })
+
+
+    //upcomming Meals
     app.post('/upcomming', async (req, res) => {
       const newProduct = req.body;
       console.log(newProduct);
@@ -55,6 +66,8 @@ async function run() {
       res.send(result);
     })
 
+
+    //main Meals
     app.get('/meals', async (req, res) => {
       const result = await mealsCollection.find().toArray();
       res.send(result);
@@ -67,25 +80,23 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/reviews', async (req, res) => {
-      const result = await reviewCollection.find().toArray();
+    app.patch('/meals/:title', async (req, res) => {
+      const item = req.body;
+      const title = req.params.title;
+      const filter = { title: title }
+      const likes = item.likes || 1;
+
+      // console.log(item,likes);
+      const updatedDoc = {
+        $set: {
+          likes: likes
+        }
+      }
+      console.log(updatedDoc);
+      const result = await mealsCollection.updateOne(filter, updatedDoc)
       res.send(result);
-    })
 
-    app.delete('/reviews/:id', async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) }
-      const result = await reviewCollection.deleteOne(query);
-      res.send(result);
     })
-
-    app.post('/reviews', async (req, res) => {
-      const newProduct = req.body;
-      // console.log(newProduct);
-      const result = await reviewCollection.insertOne(newProduct)
-      res.send(result)
-    })
-
 
     // Get all meals data from db for pagination
     app.get('/all-meals', async (req, res) => {
@@ -126,6 +137,44 @@ async function run() {
 
       res.send({ count })
     })
+
+
+    //reviews
+
+    app.get('/reviews', async (req, res) => {
+      const result = await reviewCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.delete('/reviews/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await reviewCollection.deleteOne(query);
+      res.send(result);
+    })
+
+    app.post('/reviews', async (req, res) => {
+      const newProduct = req.body;
+      // console.log(newProduct);
+      const result = await reviewCollection.insertOne(newProduct)
+      res.send(result)
+    })
+
+    app.get('/reviews/:email', async (req, res) => {
+      const email = req.params.email;
+      console.log(email);
+      try {
+        const result = await reviewCollection.find({ user_email: email }).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error('Error fetching reviews from the database:', error);
+        res.status(500).send('Internal Server Error');
+      }
+    });
+
+
+
+    //users
 
     app.get('/users', async (req, res) => {
       const result = await userCollection.find().toArray();
@@ -179,6 +228,10 @@ async function run() {
       const result = await userCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
+
+
+
+
     console.log(
       'Pinged your deployment. You successfully connected to MongoDB!'
     )
