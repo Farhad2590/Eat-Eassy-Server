@@ -3,6 +3,7 @@ const app = express()
 require('dotenv').config()
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 
 const port = process.env.PORT || 8000
 
@@ -13,7 +14,6 @@ const corsOptions = {
   optionSuccessStatus: 200,
 }
 app.use(cors(corsOptions))
-
 app.use(express.json())
 
 
@@ -23,7 +23,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
-    strict: true,
+    strict: false,// set true if anything wrong happend this is for search
     deprecationErrors: true,
   },
 })
@@ -42,14 +42,85 @@ async function run() {
     const userCollection = client.db("eatEassyDb").collection("users");
     const upcommingCollection = client.db("eatEassyDb").collection("upcomming");
     const requestCollection = client.db("eatEassyDb").collection("meal_request");
+    const paymentCollection = client.db("eatEassyDb").collection("payment");
+
+    // Ensuring text index
+    await mealsCollection.createIndex({ title: "text", description: "text" });
+
+    // Search functionality
+    app.get('/search', async (req, res) => {
+      const { query } = req.query;
+      try {
+        const result = await mealsCollection.find({
+          $text: { $search: query }
+        }).toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+    // payment intent
+    app.get('/payments/:email', async (req, res) => {
+      const query = { email: req.params.email }
+      // if (req.params.email !== req.decoded.email) {
+      //   return res.status(403).send({ message: 'forbidden access' });
+      // }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    })
 
 
+    app.post('/create-payment-intent', async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      console.log(amount, 'amount inside the intent')
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    });
+
+    app.post('/payments', async (req, res) => {
+      const payment = req.body;
+      const paymentResult = await paymentCollection.insertOne(payment);
+
+      //  carefully delete each item from the cart
+      console.log('payment info', payment);
+      const query = {
+        _id: {
+          $in: payment.cartIds.map(id => new ObjectId(id))
+        }
+      };
+
+      const deleteResult = await requestCollection.deleteMany(query);
+
+      res.send({ paymentResult, deleteResult });
+    })
     //Meal requests
+
+    app.get('/requested_meals', async (req, res) => {
+      const result = await requestCollection.find().toArray();
+      res.send(result);
+    })
+
     app.post('/mealRequest', async (req, res) => {
       const newProduct = req.body;
       console.log(newProduct);
       const result = await requestCollection.insertOne(newProduct)
       res.send(result)
+    })
+
+    app.delete('/requested_meals/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await requestCollection.deleteOne(query);
+      res.send(result);
     })
 
 
