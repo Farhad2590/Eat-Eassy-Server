@@ -92,16 +92,21 @@ async function run() {
 
       //  carefully delete each item from the cart
       console.log('payment info', payment);
-      const query = {
-        _id: {
-          $in: payment.cartIds.map(id => new ObjectId(id))
-        }
-      };
-
-      const deleteResult = await requestCollection.deleteMany(query);
-
-      res.send({ paymentResult, deleteResult });
+      res.send({ paymentResult });
     })
+
+    app.patch('/servedMeal/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: 'served'
+        }
+      }
+      const result = await requestCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    })
+
     //Meal requests
 
     app.get('/requested_meals', async (req, res) => {
@@ -130,6 +135,24 @@ async function run() {
       console.log(newProduct);
       const result = await upcommingCollection.insertOne(newProduct)
       res.send(result)
+    })
+
+    app.patch('/upcommingMeals/:id', async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const likes = item.likes || 1;
+
+      console.log(item, id);
+      const updatedDoc = {
+        $set: {
+          likes: likes
+        }
+      }
+      console.log(updatedDoc);
+      const result = await upcommingCollection.updateOne(query, updatedDoc)
+      res.send(result);
+
     })
 
     app.get('/upcomming', async (req, res) => {
