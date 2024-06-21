@@ -168,7 +168,27 @@ async function run() {
       res.send(result);
 
     })
+    app.patch('/meals/:id', async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          title: item.title,
+          category: item.category,
+          rating: item.rating,
+          likes: item.likes,
+          ingredients: item.ingredients,
+          price: item.price,
+          description: item.description,
+          image: item.image
+        }
+      }
 
+      const result = await mealsCollection.updateOne(filter, updatedDoc)
+      console.log(result);
+      res.send(result);
+    })
     // Get all meals data from db for pagination
     app.get('/all-meals', async (req, res) => {
       const size = parseInt(req.query.size)
