@@ -9,7 +9,7 @@ const port = process.env.PORT || 8000
 
 // middleware
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://eateassy-41e3e.web.app'],
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -18,7 +18,7 @@ app.use(express.json())
 
 
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.cd6vky8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
+const uri = `mongodb+srv://eatEassy:WW0IRpViQMKcmnQ3@cluster0.cd6vky8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -109,8 +109,9 @@ async function run() {
 
     //Meal requests
 
-    app.get('/requested_meals', async (req, res) => {
-      const result = await requestCollection.find().toArray();
+    app.get('/requested_meals/:email', async (req, res) => {
+      const query = { user_email: req.params.email }
+      const result = await requestCollection.find(query).toArray();
       res.send(result);
     })
 
@@ -163,6 +164,10 @@ async function run() {
 
     //main Meals
     app.get('/meals', async (req, res) => {
+      const result = await mealsCollection.find().toArray();
+      res.send(result);
+    })
+     app.get('/meals', async (req, res) => {
       const result = await mealsCollection.find().toArray();
       res.send(result);
     })
