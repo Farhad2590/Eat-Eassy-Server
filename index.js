@@ -62,10 +62,12 @@ async function run() {
     // payment intent
     app.get('/payments/:email', async (req, res) => {
       const query = { email: req.params.email }
-      // if (req.params.email !== req.decoded.email) {
-      //   return res.status(403).send({ message: 'forbidden access' });
-      // }
       const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    app.get('/payments', async (req, res) => {
+      const result = await paymentCollection.find().toArray();
       res.send(result);
     })
 
@@ -112,6 +114,10 @@ async function run() {
     app.get('/requested_meals/:email', async (req, res) => {
       const query = { user_email: req.params.email }
       const result = await requestCollection.find(query).toArray();
+      res.send(result);
+    })
+    app.get('/requested_meals', async (req, res) => {
+      const result = await requestCollection.find().toArray();
       res.send(result);
     })
 
@@ -167,8 +173,9 @@ async function run() {
       const result = await mealsCollection.find().toArray();
       res.send(result);
     })
-     app.get('/meals', async (req, res) => {
-      const result = await mealsCollection.find().toArray();
+     app.get('/meals/:email', async (req, res) => {
+      const query = { email: req.params.email }
+      const result = await mealsCollection.find(query).toArray();
       res.send(result);
     })
 
