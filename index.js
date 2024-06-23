@@ -34,7 +34,7 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db('admin').command({ ping: 1 })
+    // await client.db('admin').command({ ping: 1 })
 
 
     const mealsCollection = client.db("eatEassyDb").collection("meals");
@@ -296,6 +296,22 @@ async function run() {
         res.status(500).send('Internal Server Error');
       }
     });
+
+    app.put('/UpDateReviews/:id', async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          review: item.review,
+          rating: item.rating,
+        }
+      }
+
+      const result = await mealsCollection.updateOne(filter, updatedDoc)
+      console.log(result);
+      res.send(result);
+    })
 
 
 
